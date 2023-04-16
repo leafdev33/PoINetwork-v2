@@ -2,14 +2,18 @@ import unittest
 from interaction import Interaction
 from block import Block
 from blockchain import Blockchain
-
+from Crypto.PublicKey import RSA
 
 class TestBlockchain(unittest.TestCase):
     def test_blockchain(self):
-        # Create interactions
-        interaction1 = Interaction("data1")
-        interaction2 = Interaction("data2")
-        interaction3 = Interaction("data3")
+        # Generate a key pair and export the public key
+        key = RSA.generate(2048)
+        public_key = key.publickey().export_key()
+
+        # Create interactions with the public_key
+        interaction1 = Interaction("data1", public_key)
+        interaction2 = Interaction("data2", public_key)
+        interaction3 = Interaction("data3", public_key)
 
         # Create a blockchain
         blockchain = Blockchain()
