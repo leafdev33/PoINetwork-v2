@@ -3,10 +3,12 @@ from interaction import Interaction
 from block import Block
 from blockchain import Blockchain
 from Crypto.PublicKey import RSA
+from Crypto.Signature import PKCS1_v1_5
+from Crypto.Hash import SHA256
 
 class TestBlockchain(unittest.TestCase):
     def test_blockchain(self):
-        # Generate a key pair and export the public key
+        # Generate a key pair
         key = RSA.generate(2048)
         public_key = key.publickey().export_key()
 
@@ -14,6 +16,17 @@ class TestBlockchain(unittest.TestCase):
         interaction1 = Interaction("data1", public_key)
         interaction2 = Interaction("data2", public_key)
         interaction3 = Interaction("data3", public_key)
+
+        # Sign the interactions
+        def sign_interaction(interaction, private_key):
+            hashed_data = SHA256.new(interaction.data.encode('utf-8'))
+            signer = PKCS1_v1_5.new(private_key)
+            signature = signer.sign(hashed_data)
+            interaction.signature = signature
+
+        sign_interaction(interaction1, key)
+        sign_interaction(interaction2, key)
+        sign_interaction(interaction3, key)
 
         # Create a blockchain
         blockchain = Blockchain()
@@ -43,7 +56,6 @@ class TestBlockchain(unittest.TestCase):
         self.assertEqual(blockchain.chain[0].index, 0)
         self.assertEqual(blockchain.chain[0].previous_hash, "0")
         self.assertEqual(blockchain.chain[0].interactions, [])
-
 
 if __name__ == "__main__":
     unittest.main()
