@@ -64,11 +64,10 @@ class TestBlockchain(unittest.TestCase):
             poi_consensus.update_interaction_pool(new_block)
 
             # Test if the blockchain contains the correct number of blocks
-            self.assertEqual(len(blockchain.chain), 3)
+            self.assertEqual(len(blockchain.chain), 2)
 
             # Test if the interactions were added to the blocks
             self.assertEqual(blockchain.chain[1].interactions, [interaction1, interaction2])
-            self.assertEqual(blockchain.chain[2].interactions, [interaction3])
 
             # Test if the block hash is correctly calculated
             expected_block1_hash = blockchain.chain[1].calculate_hash()

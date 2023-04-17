@@ -8,6 +8,11 @@ class PoIConsensus:
         self.blockchain = blockchain
         self.interaction_pool = []
 
+    def add_block(self, interactions):
+        new_block = Block(len(self.blockchain.chain), self.blockchain.get_latest_block().hash, interactions)
+        self.blockchain.add_block(interactions)
+        self.update_interaction_pool(new_block)
+    
     def add_interaction(self, interaction):
         if interaction.verify_signature():
             self.interaction_pool.append(interaction)
