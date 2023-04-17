@@ -2,6 +2,7 @@ import unittest
 from interaction import Interaction
 from block import Block
 from blockchain import Blockchain
+from consensus import PoIConsensus
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA256
@@ -28,34 +29,49 @@ class TestBlockchain(unittest.TestCase):
         sign_interaction(interaction2, key)
         sign_interaction(interaction3, key)
 
-        # Create a blockchain
+        # Create a blockchain and PoIConsensus instance
         blockchain = Blockchain()
+        poi_consensus = PoIConsensus(blockchain)
 
-        # Add a block with interactions to the blockchain
-        blockchain.add_block([interaction1, interaction2])
+        # Add interactions to the interaction pool
+        poi_consensus.add_interaction(interaction1)
+        poi_consensus.add_interaction(interaction2)
+        poi_consensus.add_interaction(interaction3)
 
-        # Add another block with an interaction to the blockchain
-        blockchain.add_block([interaction3])
+        # Create a block with interactions
+        new_block = Block(len(blockchain.chain), blockchain.get_latest_block().hash, [interaction1, interaction2])
 
-        # Test if the blockchain contains the correct number of blocks
-        self.assertEqual(len(blockchain.chain), 3)
+        # Validate the block using the consensus rules
+        is_valid = poi_consensus.validate_block(new_block)
 
-        # Test if the interactions were added to the blocks
-        self.assertEqual(blockchain.chain[1].interactions, [interaction1, interaction2])
-        self.assertEqual(blockchain.chain[2].interactions, [interaction3])
+        # If the block is valid, update the blockchain and interaction pool
+        if is_valid:
+            blockchain.add_block([interaction1, interaction2])
+            poi_consensus.update_interaction_pool(new_block)
 
-        # Test if the block hash is correctly calculated
-        expected_block1_hash = blockchain.chain[1].calculate_hash()
-        self.assertEqual(blockchain.chain[1].hash, expected_block1_hash)
+            # Test if the blockchain contains the correct number of blocks
+            self.assertEqual(len(blockchain.chain), 3)
 
-        # Test if the block index and previous hash are correct
-        self.assertEqual(blockchain.chain[1].index, 1)
-        self.assertEqual(blockchain.chain[1].previous_hash, blockchain.chain[0].hash)
+            # Test if the interactions were added to the blocks
+            self.assertEqual(blockchain.chain[1].interactions, [interaction1, interaction2])
+            self.assertEqual(blockchain.chain[2].interactions, [interaction3])
 
-        # Test if the genesis block has correct values
-        self.assertEqual(blockchain.chain[0].index, 0)
-        self.assertEqual(blockchain.chain[0].previous_hash, "0")
-        self.assertEqual(blockchain.chain[0].interactions, [])
+            # Test if the block hash is correctly calculated
+            expected_block1_hash = blockchain.chain[1].calculate_hash()
+            self.assertEqual(blockchain.chain[1].hash, expected_block1_hash)
+
+            # Test if the block index and previous hash are correct
+            self.assertEqual(blockchain.chain[1].index, 1)
+            self.assertEqual(blockchain.chain[1].previous_hash, blockchain.chain[0].hash)
+
+            # Test if the genesis block has correct values
+            self.assertEqual(blockchain.chain[0].index, 0)
+            self.assertEqual(blockchain.chain[0].previous_hash, "0")
+            self.assertEqual(blockchain.chain[0].interactions, [])
+
+            # Test if the interaction pool is updated correctly
+            self.assertEqual(len(poi_consensus.interaction_pool), 1)
+            self.assertEqual(poi_consensus.interaction_pool[0], interaction3)
 
 if __name__ == "__main__":
     unittest.main()
