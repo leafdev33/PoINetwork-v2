@@ -9,7 +9,7 @@ class PoIConsensus:
         self.interaction_pool = []
 
     def add_interaction(self, interaction):
-        if interaction.verify_interaction():
+        if interaction.verify_signature():
             self.interaction_pool.append(interaction)
             return True
         return False

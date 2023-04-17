@@ -16,13 +16,16 @@ class Interaction:
         signer = PKCS1_v1_5.new(private_key)
         self.signature = signer.sign(hashed_data)
 
-    def verify(self):
-        if self.signature is None:
+    def verify_signature(self):
+        if not self.signature or not self.public_key:
             return False
 
         hashed_data = SHA256.new(self.data.encode('utf-8'))
         verifier = PKCS1_v1_5.new(self.public_key)
         return verifier.verify(hashed_data, self.signature)
+
+    def verify_interaction(self):
+        return self.verify_signature()
 
 # Example usage:
 # Generate a public/private key pair
@@ -37,5 +40,5 @@ interaction = Interaction("Sample interaction data", public_key)
 interaction.sign(private_key)
 
 # Verify the interaction
-is_valid = interaction.verify()
+is_valid = interaction.verify_interaction()
 print("Is the interaction valid?", is_valid)

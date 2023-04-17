@@ -7,6 +7,16 @@ from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA256
 
+class MockNode:
+    def __init__(self):
+        self.eligible = True
+
+    def is_eligible(self):
+        return self.eligible
+
+    def validate_block(self, block):
+        return True
+
 class TestBlockchain(unittest.TestCase):
     def test_blockchain(self):
         # Generate a key pair
@@ -38,15 +48,19 @@ class TestBlockchain(unittest.TestCase):
         poi_consensus.add_interaction(interaction2)
         poi_consensus.add_interaction(interaction3)
 
+        # Create a list of mock nodes
+        nodes = [MockNode() for _ in range(5)]
+
         # Create a block with interactions
         new_block = Block(len(blockchain.chain), blockchain.get_latest_block().hash, [interaction1, interaction2])
 
         # Validate the block using the consensus rules
-        is_valid = poi_consensus.validate_block(new_block)
+        is_valid = poi_consensus.validate_block(new_block, nodes)
 
         # If the block is valid, update the blockchain and interaction pool
         if is_valid:
-            blockchain.add_block([interaction1, interaction2])
+            new_block.hash = new_block.calculate_hash()
+            blockchain.chain.append(new_block)
             poi_consensus.update_interaction_pool(new_block)
 
             # Test if the blockchain contains the correct number of blocks
@@ -72,6 +86,7 @@ class TestBlockchain(unittest.TestCase):
             # Test if the interaction pool is updated correctly
             self.assertEqual(len(poi_consensus.interaction_pool), 1)
             self.assertEqual(poi_consensus.interaction_pool[0], interaction3)
+
 
 if __name__ == "__main__":
     unittest.main()
