@@ -1,6 +1,6 @@
 import unittest
 from Crypto.PublicKey import RSA
-from token import Token, SignedTransaction
+from pointoken import Token, SignedTransaction
 
 class TestToken(unittest.TestCase):
     def test_token_and_signed_transaction(self):
