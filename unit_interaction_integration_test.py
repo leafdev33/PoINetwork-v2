@@ -1,91 +1,76 @@
 import unittest
-from interaction import Interaction
-from block import Block
 from blockchain import Blockchain
+from interaction import Interaction
 from consensus import PoIConsensus
+from pointoken import Token, SignedTransaction
 from Crypto.PublicKey import RSA
-from Crypto.Signature import PKCS1_v1_5
-from Crypto.Hash import SHA256
 
 class MockNode:
     def __init__(self):
-        self.eligible = True
-
-    def is_eligible(self):
-        return self.eligible
-
-    def validate_block(self, block):
-        return True
+        self.blockchain = Blockchain()
+        self.poi_consensus = PoIConsensus(self.blockchain)
+        self.token = Token()
 
 class TestBlockchain(unittest.TestCase):
     def test_blockchain(self):
-        # Generate a key pair
-        key = RSA.generate(2048)
-        public_key = key.publickey().export_key()
+        # Create a mock node
+        node = MockNode()
 
-        # Create interactions with the public_key
-        interaction1 = Interaction("data1", public_key)
-        interaction2 = Interaction("data2", public_key)
-        interaction3 = Interaction("data3", public_key)
+        # Generate a key pair for two users
+        key1 = RSA.generate(2048)
+        public_key1 = key1.publickey().export_key()
+        key2 = RSA.generate(2048)
+        public_key2 = key2.publickey().export_key()
+
+        # Add initial tokens to a user
+        node.token.add_tokens(public_key1, 100)
+
+        # Create sample interactions
+        interaction1 = Interaction('like - post1',public_key1)
+        interaction2 = Interaction('share - post2', public_key1)
+        interaction3 = Interaction('like - post1', public_key2)
 
         # Sign the interactions
-        def sign_interaction(interaction, private_key):
-            hashed_data = SHA256.new(interaction.data.encode('utf-8'))
-            signer = PKCS1_v1_5.new(private_key)
-            signature = signer.sign(hashed_data)
-            interaction.signature = signature
+        interaction1.sign(key1.exportKey())
+        interaction2.sign(key1.exportKey())
+        interaction3.sign(key2.exportKey())
 
-        sign_interaction(interaction1, key)
-        sign_interaction(interaction2, key)
-        sign_interaction(interaction3, key)
+        # Add interactions to the PoIConsensus
+        node.poi_consensus.add_interaction(interaction1)
+        node.poi_consensus.add_interaction(interaction2)
+        node.poi_consensus.add_interaction(interaction3)
 
-        # Create a blockchain and PoIConsensus instance
-        blockchain = Blockchain()
-        poi_consensus = PoIConsensus(blockchain)
+        self.assertEqual(len(node.poi_consensus.interaction_pool), 3)
 
-        # Add interactions to the interaction pool
-        poi_consensus.add_interaction(interaction1)
-        poi_consensus.add_interaction(interaction2)
-        poi_consensus.add_interaction(interaction3)
+        # Validate block with consensus nodes
+        node.poi_consensus.validate_interactions()
+        self.assertEqual(len(node.poi_consensus.interaction_pool), 0)
 
-        # Create a list of mock nodes
-        nodes = [MockNode() for _ in range(5)]
+        # Add the confirmed interactions to the blockchain
+        node.blockchain.add_block(node.poi_consensus.confirmed_interactions)
+        self.assertEqual(len(node.blockchain.chain), 2)
+        self.assertEqual(node.blockchain.chain[1].interactions, [interaction1, interaction2, interaction3])
 
-        # Create a block with interactions
-        new_block = Block(len(blockchain.chain), blockchain.get_latest_block().hash, [interaction1, interaction2])
+        # Create and sign a transaction
+        transaction = SignedTransaction(public_key1, public_key2, 50)
+        transaction.sign(key1)
 
-        # Validate the block using the consensus rules
-        is_valid = poi_consensus.validate_block(new_block, nodes)
+        # Test token transfer
+        result = node.token.transfer_tokens(public_key1, public_key2, 50, transaction.signature)
+        self.assertTrue(result)
+        self.assertEqual(node.token.balances[public_key1], 50)
+        self.assertEqual(node.token.balances[public_key2], 50)
 
-        # If the block is valid, update the blockchain and interaction pool
-        if is_valid:
-            new_block.hash = new_block.calculate_hash()
-            blockchain.chain.append(new_block)
-            poi_consensus.update_interaction_pool(new_block)
+        # Test invalid signature
+        transaction.signature = b"fake_signature"
+        result = node.token.transfer_tokens(public_key1, public_key2, 50, transaction.signature)
+        self.assertFalse(result)
 
-            # Test if the blockchain contains the correct number of blocks
-            self.assertEqual(len(blockchain.chain), 2)
-
-            # Test if the interactions were added to the blocks
-            self.assertEqual(blockchain.chain[1].interactions, [interaction1, interaction2])
-
-            # Test if the block hash is correctly calculated
-            expected_block1_hash = blockchain.chain[1].calculate_hash()
-            self.assertEqual(blockchain.chain[1].hash, expected_block1_hash)
-
-            # Test if the block index and previous hash are correct
-            self.assertEqual(blockchain.chain[1].index, 1)
-            self.assertEqual(blockchain.chain[1].previous_hash, blockchain.chain[0].hash)
-
-            # Test if the genesis block has correct values
-            self.assertEqual(blockchain.chain[0].index, 0)
-            self.assertEqual(blockchain.chain[0].previous_hash, "0")
-            self.assertEqual(blockchain.chain[0].interactions, [])
-
-            # Test if the interaction pool is updated correctly
-            self.assertEqual(len(poi_consensus.interaction_pool), 1)
-            self.assertEqual(poi_consensus.interaction_pool[0], interaction3)
-
+        # Test insufficient balance
+        transaction = SignedTransaction(public_key1, public_key2, 200)
+        transaction.sign(key1)
+        result = node.token.transfer_tokens(public_key1, public_key2, 200, transaction.signature)
+        self.assertFalse(result)
 
 if __name__ == "__main__":
     unittest.main()
