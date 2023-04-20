@@ -1,64 +1,45 @@
+from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA256
-
-class SignedTransaction:
-    def __init__(self, sender, recipient, amount, signature=None):
-        self.sender = sender
-        self.recipient = recipient
-        self.amount = amount
-        self.signature = signature
-
-    def sign(self, private_key):
-        message = f"{self.sender}:{self.recipient}:{self.amount}"
-        hashed_message = SHA256.new(message.encode('utf-8'))
-        signer = PKCS1_v1_5.new(private_key)
-        self.signature = signer.sign(hashed_message)
-
-    def verify(self, public_key):
-        message = f"{self.sender}:{self.recipient}:{self.amount}"
-        hashed_message = SHA256.new(message.encode('utf-8'))
-        verifier = PKCS1_v1_5.new(public_key)
-        return verifier.verify(hashed_message, self.signature)
 
 class Token:
     def __init__(self):
         self.balances = {}
 
-    def create_tokens(self, address, amount):
-        """
-        Creates tokens and assigns them to the specified address.
-        """
-        if address not in self.balances:
-            self.balances[address] = 0
-        self.balances[address] += amount
+    def add_tokens(self, public_key, amount):
+        if public_key in self.balances:
+            self.balances[public_key] += amount
+        else:
+            self.balances[public_key] = amount
 
-    def transfer_tokens(self, signed_transaction):
-        """
-        Transfers tokens based on the information in a signed transaction.
-        """
-        sender = signed_transaction.sender
-        recipient = signed_transaction.recipient
-        amount = signed_transaction.amount
+    def transfer_tokens(self, sender_public_key, recipient_public_key, amount, signature):
+        if self.verify_transaction(sender_public_key, recipient_public_key, amount, signature):
+            self.balances[sender_public_key] -= amount
+            self.add_tokens(recipient_public_key, amount)
+            return True
+        return False
 
-        if sender not in self.balances:
-            raise ValueError("Sender address not found.")
-        if recipient not in self.balances:
-            self.balances[recipient] = 0
+    def verify_transaction(self, sender_public_key, recipient_public_key, amount, signature):
+        signer_public_key = RSA.import_key(sender_public_key)
+        hashed_message = SHA256.new(f"{sender_public_key}{recipient_public_key}{amount}".encode("utf-8"))
+        verifier = PKCS1_v1_5.new(signer_public_key)
+        return verifier.verify(hashed_message, signature)
 
-        if self.balances[sender] < amount:
-            raise ValueError("Insufficient balance.")
+class SignedTransaction:
+    def __init__(self, sender_public_key, recipient_public_key, amount):
+        self.sender_public_key = sender_public_key
+        self.recipient_public_key = recipient_public_key
+        self.amount = amount
+        self.signature = None
 
-        if not signed_transaction.verify(sender):
-            raise ValueError("Invalid transaction signature.")
+    def sign(self, private_key):
+        signer_private_key = RSA.import_key(private_key)
+        hashed_message = SHA256.new(f"{self.sender_public_key}{self.recipient_public_key}{self.amount}".encode("utf-8"))
+        signer = PKCS1_v1_5.new(signer_private_key)
+        self.signature = signer.sign(hashed_message)
 
-        self.balances[sender] -= amount
-        self.balances[recipient] += amount
-
-
-    def get_balance(self, address):
-        """
-        Returns the token balance for the specified address.
-        """
-        if address not in self.balances:
-            return 0
-        return self.balances[address]
+    def verify(self, public_key):
+        signer_public_key = RSA.import_key(public_key)
+        hashed_message = SHA256.new(f"{self.sender_public_key}{self.recipient_public_key}{self.amount}".encode("utf-8"))
+        verifier = PKCS1_v1_5.new(signer_public_key)
+        return verifier.verify(hashed_message, self.signature)
