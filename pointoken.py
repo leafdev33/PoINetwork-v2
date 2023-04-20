@@ -14,9 +14,12 @@ class Token:
 
     def transfer_tokens(self, sender_public_key, recipient_public_key, amount, signature):
         if self.verify_transaction(sender_public_key, recipient_public_key, amount, signature):
-            self.balances[sender_public_key] -= amount
-            self.add_tokens(recipient_public_key, amount)
-            return True
+            if self.balances[sender_public_key] >= amount:
+                self.balances[sender_public_key] -= amount
+                self.add_tokens(recipient_public_key, amount)
+                return True
+            else:
+                return False
         return False
 
     def verify_transaction(self, sender_public_key, recipient_public_key, amount, signature):

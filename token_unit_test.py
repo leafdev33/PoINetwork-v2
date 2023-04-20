@@ -19,27 +19,28 @@ class TestToken(unittest.TestCase):
 
         # Create a signed transaction
         transaction = SignedTransaction(public_key1, public_key2, 50)
-        transaction.sign(key1.export_key())  # Export the private key to PEM format
+        transaction.sign(key1.export_key())
 
         # Test transaction signing and verification
         self.assertTrue(transaction.verify(public_key1))
         self.assertFalse(transaction.verify(public_key2))
 
         # Test token transfer
-        token.transfer_tokens(public_key1, public_key2, 50, transaction.signature)
+        result = token.transfer_tokens(public_key1, public_key2, 50, transaction.signature)
+        self.assertTrue(result)
         self.assertEqual(token.balances[public_key1], 50)
         self.assertEqual(token.balances[public_key2], 50)
 
         # Test invalid signature
         transaction.signature = b"fake_signature"
-        with self.assertRaises(ValueError):
-            token.transfer_tokens(public_key1, public_key2, 50, transaction.signature)
+        result = token.transfer_tokens(public_key1, public_key2, 50, transaction.signature)
+        self.assertFalse(result)
 
         # Test insufficient balance
         transaction = SignedTransaction(public_key1, public_key2, 200)
         transaction.sign(key1.export_key())
-        with self.assertRaises(ValueError):
-            token.transfer_tokens(public_key1, public_key2, 200, transaction.signature)
+        result = token.transfer_tokens(public_key1, public_key2, 200, transaction.signature)
+        self.assertFalse(result)
 
 if __name__ == "__main__":
     unittest.main()
