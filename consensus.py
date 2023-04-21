@@ -7,7 +7,8 @@ class PoIConsensus:
     def __init__(self, blockchain):
         self.blockchain = blockchain
         self.interaction_pool = []
-
+        self.confirmed_interactions = []
+        
     def add_block(self, interactions):
         new_block = Block(len(self.blockchain.chain), self.blockchain.get_latest_block().hash, interactions)
         self.blockchain.add_block(interactions)
@@ -18,6 +19,12 @@ class PoIConsensus:
             self.interaction_pool.append(interaction)
             return True
         return False
+    
+    def validate_interactions(self):
+    # Implement your consensus algorithm here.
+    # For simplicity, let's consider all interactions in the pool as valid.
+        self.confirmed_interactions = self.interaction_pool
+        self.interaction_pool = []
 
     def select_proposer(self, nodes):
         eligible_nodes = [node for node in nodes if node.is_eligible()]
