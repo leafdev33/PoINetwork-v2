@@ -68,7 +68,7 @@ class TestBlockchain(unittest.TestCase):
 
         # Test insufficient balance
         transaction = SignedTransaction(public_key1, public_key2, 200)
-        transaction.sign(key1)
+        transaction.sign(key1.export_key())
         result = node.token.transfer_tokens(public_key1, public_key2, 200, transaction.signature)
         self.assertFalse(result)
 
