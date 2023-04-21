@@ -53,7 +53,7 @@ class TestBlockchain(unittest.TestCase):
 
         # Create and sign a transaction
         transaction = SignedTransaction(public_key1, public_key2, 50)
-        transaction.sign(key1)
+        transaction.sign(key1.export_key())
 
         # Test token transfer
         result = node.token.transfer_tokens(public_key1, public_key2, 50, transaction.signature)

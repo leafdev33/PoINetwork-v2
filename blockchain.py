@@ -10,7 +10,6 @@ class Blockchain:
     def add_block(self, interactions):
         latest_block = self.get_latest_block()
         new_block = Block(len(self.chain), latest_block.hash, interactions)
-        new_block.mine()
         self.chain.append(new_block)
 
     def get_latest_block(self):
