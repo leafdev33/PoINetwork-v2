@@ -72,5 +72,42 @@ class TestBlockchain(unittest.TestCase):
         result = node.token.transfer_tokens(public_key1, public_key2, 200, transaction.signature)
         self.assertFalse(result)
 
-if __name__ == "__main__":
+class TestNode(unittest.TestCase):
+    def test_node(self):
+        # Initialize a node and generate key pairs
+        node1 = Node()
+        key1 = RSA.generate(2048)
+        pubkey1 = key1.publickey().export_key()
+        private_key1 = key1.export_key()
+
+        # Test token creation
+        token = Token(1000, pubkey1)
+        node1.update_balances([token])
+
+        # Check if the token balance was updated correctly
+        self.assertEqual(node1.get_balance(pubkey1), 1000)
+
+        # Create another node and key pair
+        node2 = Node()
+        key2 = RSA.generate(2048)
+        pubkey2 = key2.publickey().export_key()
+
+        # Test creating and signing interactions
+        interaction = node1.create_interaction(pubkey1, pubkey2, 200, private_key1)
+        self.assertIsNotNone(interaction)
+
+        # Test interaction verification
+        self.assertTrue(interaction.verify_signature())
+
+        # Test updating balances with interactions
+        node1.update_balances([interaction])
+        node2.update_balances([interaction])
+
+        # Check if the balances have been updated correctly
+        self.assertEqual(node1.get_balance(pubkey1), 800)
+        self.assertEqual(node2.get_balance(pubkey2), 200)
+
+        # ... additional tests for broadcasting and receiving interactions, adding blocks, etc. ...
+
+if __name__ == '__main__':
     unittest.main()
