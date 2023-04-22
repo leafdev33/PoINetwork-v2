@@ -3,6 +3,7 @@ from blockchain import Blockchain
 from interaction import Interaction
 from consensus import PoIConsensus
 from pointoken import Token, SignedTransaction
+from poinode import Node
 from Crypto.PublicKey import RSA
 
 class MockNode:
@@ -81,8 +82,8 @@ class TestNode(unittest.TestCase):
         private_key1 = key1.export_key()
 
         # Test token creation
-        token = Token(1000, pubkey1)
-        node1.update_balances([token])
+        token = Token()
+        token.add_tokens(pubkey1, 1000)
 
         # Check if the token balance was updated correctly
         self.assertEqual(node1.get_balance(pubkey1), 1000)
