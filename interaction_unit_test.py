@@ -17,7 +17,7 @@ class TestInteraction(unittest.TestCase):
         interaction.sign(private_key)
 
         # Verify the interaction
-        self.assertTrue(interaction.verify())
+        self.assertTrue(interaction.verify_signature())
 
     def test_verify_invalid_signature(self):
         # Generate a public/private key pair
@@ -37,7 +37,7 @@ class TestInteraction(unittest.TestCase):
         interaction.sign(private_key2)
 
         # Verify the interaction using public_key1 (expecting False since the wrong key was used to sign)
-        self.assertFalse(interaction.verify())
+        self.assertFalse(interaction.verify_signature())
 
 if __name__ == '__main__':
     unittest.main()
