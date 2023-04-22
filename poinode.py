@@ -27,8 +27,10 @@ class Node:
 
     def validate_and_add_block(self, block):
         if self.poi_consensus.validate_block(block):
-            self.blockchain.add_block(block.interactions)
-            self.update_balances(block.interactions)
+            # Add newly minted tokens as interactions to the block
+            tokens = self.poi_consensus.mint_tokens(block)
+            self.blockchain.add_block(block.interactions + tokens)
+            self.update_balances(block.interactions + tokens)
 
     def update_balances(self, interactions):
         for interaction in interactions:
@@ -42,6 +44,10 @@ class Node:
                     self.token_balances[interaction.owner] = interaction.amount
                 else:
                     self.token_balances[interaction.owner] += interaction.amount
+
+                # Deduct the balance of the sender
+                if self.token_balances.get(interaction.sender) is not None:
+                    self.token_balances[interaction.sender] -= interaction.amount
 
     def get_balance(self, public_key):
         return self.token_balances.get(public_key, 0)

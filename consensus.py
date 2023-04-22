@@ -31,6 +31,14 @@ class PoIConsensus:
         if not eligible_nodes:
             return None
         return random.choice(eligible_nodes)
+    
+    def mint_tokens(self, block):
+        tokens = []
+        for pubkey, points in block.poi_accumulated.items():
+            if points >= self.required_points:
+                tokens.append(Token(owner=pubkey, amount=self.token_reward))
+                block.poi_accumulated[pubkey] -= self.required_points
+        return tokens
 
     def validate_block(self, block, nodes):
         for interaction in block.interactions:
