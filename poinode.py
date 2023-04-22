@@ -6,14 +6,11 @@ from consensus import PoIConsensus
 class Node:
     def __init__(self):
         self.blockchain = Blockchain()
-        self.token_balances = {}
         self.poi_consensus = PoIConsensus(self.blockchain)
+        self.token_balances = Token()
 
-    def create_interaction(self, sender, recipient, amount, private_key):
-        if self.token_balances.get(sender) is None or self.token_balances[sender] < amount:
-            return None
-
-        interaction = Interaction(sender, recipient, amount)
+    def create_interaction(self, event, sender, private_key):
+        interaction = Interaction(event, sender)
         interaction.sign(private_key)
         return interaction
 

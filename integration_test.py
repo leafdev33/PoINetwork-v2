@@ -75,25 +75,19 @@ class TestBlockchain(unittest.TestCase):
 
 class TestNode(unittest.TestCase):
     def test_node(self):
-        # Initialize a node and generate key pairs
         node1 = Node()
-        key1 = RSA.generate(2048)
-        pubkey1 = key1.publickey().export_key()
-        private_key1 = key1.export_key()
-
-        # Test token creation
-        token = Token()
-        token.add_tokens(pubkey1, 1000)
-
-        # Check if the token balance was updated correctly
-        self.assertEqual(node1.get_balance(pubkey1), 1000)
-
-        # Create another node and key pair
         node2 = Node()
-        key2 = RSA.generate(2048)
-        pubkey2 = key2.publickey().export_key()
 
-        # Test creating and signing interactions
+        key = RSA.generate(2048)
+        pubkey1 = key.publickey().export_key()
+        private_key1 = key.export_key()
+
+        key = RSA.generate(2048)
+        pubkey2 = key.publickey().export_key()
+
+        # Add initial tokens to pubkey1
+        node1.token_balances[pubkey1] = 1000
+
         interaction = node1.create_interaction(pubkey1, pubkey2, 200, private_key1)
         self.assertIsNotNone(interaction)
 
@@ -107,6 +101,9 @@ class TestNode(unittest.TestCase):
         # Check if the balances have been updated correctly
         self.assertEqual(node1.get_balance(pubkey1), 800)
         self.assertEqual(node2.get_balance(pubkey2), 200)
+
+        event = "Test event: token transfer"
+        interaction = node1.create_interaction(pubkey1, pubkey2, 200, private_key1, event)
 
         # ... additional tests for broadcasting and receiving interactions, adding blocks, etc. ...
 
