@@ -3,8 +3,10 @@ from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA256
 
 class Token:
-    def __init__(self):
+    def __init__(self, initial_balance=None, owner=None):
         self.balances = {}
+        if initial_balance is not None and owner is not None:
+            self.balances[owner] = initial_balance
 
     def add_tokens(self, public_key, amount):
         if public_key in self.balances:

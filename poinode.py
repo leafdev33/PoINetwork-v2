@@ -32,18 +32,16 @@ class Node:
 
     def update_balances(self, interactions):
         for interaction in interactions:
-            if isinstance(interaction, Token):
-                if self.token_balances.get(interaction.receiver) is None:
-                    self.token_balances[interaction.receiver] = 0
-                self.token_balances[interaction.receiver] += interaction.amount
-            else:
+            if isinstance(interaction, Interaction):
                 if self.token_balances.get(interaction.sender) is None:
-                    self.token_balances[interaction.sender] = 0
-                if self.token_balances.get(interaction.receiver) is None:
-                    self.token_balances[interaction.receiver] = 0
-                self.token_balances[interaction.sender] -= interaction.amount
-                self.token_balances[interaction.receiver] += interaction.amount
-
+                    self.token_balances[interaction.sender] = interaction.points
+                else:
+                    self.token_balances[interaction.sender] += interaction.points
+            elif isinstance(interaction, Token):
+                if self.token_balances.get(interaction.owner) is None:
+                    self.token_balances[interaction.owner] = interaction.amount
+                else:
+                    self.token_balances[interaction.owner] += interaction.amount
 
     def get_balance(self, public_key):
         return self.token_balances.get(public_key, 0)
