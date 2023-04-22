@@ -1,6 +1,6 @@
 import unittest
-from Crypto.PublicKey import RSA
 from interaction import Interaction
+from Crypto.PublicKey import RSA
 
 class TestInteraction(unittest.TestCase):
 
@@ -11,7 +11,7 @@ class TestInteraction(unittest.TestCase):
         private_key = key.exportKey()
 
         # Create an interaction
-        interaction = Interaction("Sample interaction data", public_key)
+        interaction = Interaction("Sample interaction data", public_key, 10)
 
         # Sign the interaction
         interaction.sign(private_key)
@@ -31,7 +31,7 @@ class TestInteraction(unittest.TestCase):
         private_key2 = key2.exportKey()
 
         # Create an interaction using public_key1
-        interaction = Interaction("Sample interaction data", public_key1)
+        interaction = Interaction("Sample interaction data", public_key1, 10)
 
         # Sign the interaction with private_key2
         interaction.sign(private_key2)

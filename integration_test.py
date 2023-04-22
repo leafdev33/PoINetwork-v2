@@ -27,9 +27,9 @@ class TestBlockchain(unittest.TestCase):
         node.token.add_tokens(public_key1, 100)
 
         # Create sample interactions
-        interaction1 = Interaction('like - post1',public_key1)
-        interaction2 = Interaction('share - post2', public_key1)
-        interaction3 = Interaction('like - post1', public_key2)
+        interaction1 = Interaction('like - post1', public_key1, 10)
+        interaction2 = Interaction('share - post2', public_key1, 15)
+        interaction3 = Interaction('like - post1', public_key2, 10)
 
         # Sign the interactions
         interaction1.sign(key1.exportKey())
@@ -89,23 +89,19 @@ class TestNode(unittest.TestCase):
         node1.token.add_tokens(pubkey1, 1000)
 
         event = "Test event: token transfer"
-        interaction = node1.create_interaction(event, pubkey1, private_key1)
+        interaction1 = node1.create_interaction(event, pubkey1, private_key1, 10)
+        interaction2 = Interaction(event, pubkey2, 200)
 
         # Test interaction verification
-        self.assertTrue(interaction.verify_signature())
+        self.assertTrue(interaction1.verify_signature())
 
         # Test updating balances with interactions
-        node1.update_balances([interaction])
-        node2.update_balances([interaction])
+        node1.update_balances([interaction1, interaction2])
+        node2.update_balances([interaction1, interaction2])
 
         # Check if the balances have been updated correctly
-        self.assertEqual(node1.get_balance(pubkey1), 800)
+        self.assertEqual(node1.get_balance(pubkey1), 1010)
         self.assertEqual(node2.get_balance(pubkey2), 200)
-
-        event = "Test event: token transfer"
-        interaction = node1.create_interaction(pubkey1, pubkey2, 200, private_key1, event)
-
-        # ... additional tests for broadcasting and receiving interactions, adding blocks, etc. ...
 
 if __name__ == '__main__':
     unittest.main()

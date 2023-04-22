@@ -9,11 +9,11 @@ class Node:
         self.poi_consensus = PoIConsensus(self.blockchain)
         self.token = Token()
 
-    def create_interaction(self, event, sender, private_key):
-        interaction = Interaction(event, sender)
+    def create_interaction(self, event, sender, private_key, points):
+        interaction = Interaction(event, sender, points)
         interaction.sign(private_key)
         return interaction
-
+    
     def broadcast_interaction(self, interaction, network):
         if interaction.verify_signature() and interaction.sender != interaction.recipient:
             network.broadcast_interaction(self, interaction)
@@ -32,19 +32,20 @@ class Node:
     def update_balances(self, interactions):
         for interaction in interactions:
             if isinstance(interaction, Interaction):
-                if self.token_balances.get(interaction.sender) is None:
-                    self.token_balances[interaction.sender] = interaction.points
+                public_key_pem = interaction.public_key.export_key()
+                if self.token.balances.get(public_key_pem) is None:
+                    self.token.balances[public_key_pem] = interaction.points
                 else:
-                    self.token_balances[interaction.sender] += interaction.points
+                    self.token.balances[public_key_pem] += interaction.points
             elif isinstance(interaction, Token):
-                if self.token_balances.get(interaction.owner) is None:
-                    self.token_balances[interaction.owner] = interaction.amount
+                if self.token.balances.get(interaction.owner) is None:
+                    self.token.balances[interaction.owner] = interaction.amount
                 else:
-                    self.token_balances[interaction.owner] += interaction.amount
+                    self.token.balances[interaction.owner] += interaction.amount
 
                 # Deduct the balance of the sender
-                if self.token_balances.get(interaction.sender) is not None:
-                    self.token_balances[interaction.sender] -= interaction.amount
+                if self.token.balances.get(interaction.sender) is not None:
+                    self.token.balances[interaction.sender] -= interaction.amount
 
-    def get_balance(self, public_key):
-        return self.token.get_balance(public_key, 0)
+    def get_balance(self, public_key_pem):
+        return self.token.balances.get(public_key_pem, 0)

@@ -4,11 +4,12 @@ from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA256
 
 class Interaction:
-    def __init__(self, data, public_key):
+    def __init__(self, data, public_key, points):
         self.timestamp = time.time()
         self.data = data
         self.public_key = RSA.importKey(public_key)
         self.signature = None
+        self.points = points
 
     def sign(self, private_key):
         private_key = RSA.importKey(private_key)
@@ -34,7 +35,7 @@ public_key = key.publickey().exportKey()
 private_key = key.exportKey()
 
 # Create an interaction
-interaction = Interaction("Sample interaction data", public_key)
+interaction = Interaction("Sample interaction data", public_key, 1)
 
 # Sign the interaction
 interaction.sign(private_key)
