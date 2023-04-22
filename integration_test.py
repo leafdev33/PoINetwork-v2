@@ -86,10 +86,10 @@ class TestNode(unittest.TestCase):
         pubkey2 = key.publickey().export_key()
 
         # Add initial tokens to pubkey1
-        node1.token_balances[pubkey1] = 1000
+        node1.token.add_tokens(pubkey1, 1000)
 
-        interaction = node1.create_interaction(pubkey1, pubkey2, 200, private_key1)
-        self.assertIsNotNone(interaction)
+        event = "Test event: token transfer"
+        interaction = node1.create_interaction(event, pubkey1, private_key1)
 
         # Test interaction verification
         self.assertTrue(interaction.verify_signature())

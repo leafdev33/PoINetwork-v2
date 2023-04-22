@@ -7,7 +7,7 @@ class Node:
     def __init__(self):
         self.blockchain = Blockchain()
         self.poi_consensus = PoIConsensus(self.blockchain)
-        self.token_balances = Token()
+        self.token = Token()
 
     def create_interaction(self, event, sender, private_key):
         interaction = Interaction(event, sender)
@@ -47,4 +47,4 @@ class Node:
                     self.token_balances[interaction.sender] -= interaction.amount
 
     def get_balance(self, public_key):
-        return self.token_balances.get(public_key, 0)
+        return self.token.get_balance(public_key, 0)
