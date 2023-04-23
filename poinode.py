@@ -1,26 +1,37 @@
+import socket
+import json
 from blockchain import Blockchain
 from pointoken import Token
 from interaction import Interaction
 from consensus import PoIConsensus
 
 class Node:
-    def __init__(self):
+    def __init__(self, connection=None):
         self.blockchain = Blockchain()
         self.poi_consensus = PoIConsensus(self.blockchain)
         self.token = Token()
+        self.connection = connection
 
-    def create_interaction(self, event, sender, private_key, points):
-        interaction = Interaction(event, sender, points)
+    def connect(self, host, port):
+        self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connection.connect((host, port))
+
+    def create_interaction(self, data, public_key, recipient_public_key, private_key, points):
+        interaction = Interaction(data, public_key, recipient_public_key, points)
         interaction.sign(private_key)
         return interaction
     
-    def broadcast_interaction(self, interaction, network):
-        if interaction.verify_signature() and interaction.sender != interaction.recipient:
-            network.broadcast_interaction(self, interaction)
-
-    def receive_interaction(self, interaction):
+    def broadcast_interaction(self, interaction):
+        if interaction.verify_signature() and interaction.public_key != interaction.recipient:
+            serialized_interaction = interaction.serialize()
+            self.connection.send(serialized_interaction.encode())
+    
+    def receive_interaction(self):
+        data = self.connection.recv(4096).decode()
+        interaction = Interaction.deserialize(data)
         if interaction.verify_signature():
             self.poi_consensus.add_interaction(interaction)
+        return interaction
 
     def validate_and_add_block(self, block):
         if self.poi_consensus.validate_block(block):
