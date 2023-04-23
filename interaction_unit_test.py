@@ -10,14 +10,20 @@ class TestInteraction(unittest.TestCase):
         public_key = key.publickey().exportKey()
         private_key = key.exportKey()
 
+        # Generate another public/private key pair for public_key2
+        key2 = RSA.generate(2048)
+        public_key2 = key2.publickey().exportKey()
+
         # Create an interaction
-        interaction = Interaction("Sample interaction data", public_key, 10)
+        interaction = Interaction("Sample interaction data", public_key, public_key2, 10)
 
         # Sign the interaction
         interaction.sign(private_key)
 
+
         # Verify the interaction
         self.assertTrue(interaction.verify_signature())
+
 
     def test_verify_invalid_signature(self):
         # Generate a public/private key pair
@@ -31,7 +37,7 @@ class TestInteraction(unittest.TestCase):
         private_key2 = key2.exportKey()
 
         # Create an interaction using public_key1
-        interaction = Interaction("Sample interaction data", public_key1, 10)
+        interaction = Interaction("Sample interaction data", public_key1, public_key2, 10)
 
         # Sign the interaction with private_key2
         interaction.sign(private_key2)
