@@ -36,10 +36,10 @@ class Network:
                 break
 
     def broadcast_interaction(self, interaction, sender_node=None):
-        for node in self.nodes:
+        for node in self.nodes.copy():
             if node != sender_node:
                 try:
-                    node.send_interaction(interaction)
+                    node.broadcast_interaction(interaction)
                 except Exception as e:
                     print(f"Error broadcasting interaction: {e}")
                     self.nodes.remove(node)

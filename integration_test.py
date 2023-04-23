@@ -27,7 +27,7 @@ class TestBlockchain(unittest.TestCase):
         node.token.add_tokens(public_key1, 100)
 
         # Create sample interactions
-        interaction1 = Interaction('like - post1', public_key1, 10)
+        interaction1 = Interaction('like - post1', public_key1, RSA.importKey(pubkey2), 10)
         interaction2 = Interaction('share - post2', public_key1, 15)
         interaction3 = Interaction('like - post1', public_key2, 10)
 
