@@ -43,11 +43,17 @@ class Node:
     def update_balances(self, interactions):
         for interaction in interactions:
             if isinstance(interaction, Interaction):
-                public_key_pem = interaction.public_key.export_key()
-                if self.token.balances.get(public_key_pem) is None:
-                    self.token.balances[public_key_pem] = interaction.points
-                else:
-                    self.token.balances[public_key_pem] += interaction.points
+                sender_pem = interaction.public_key.export_key()  # Update this line
+                recipient_pem = interaction.recipient.export_key()
+
+                if self.token.balances.get(sender_pem) is None:
+                    self.token.balances[sender_pem] = 0
+                if self.token.balances.get(recipient_pem) is None:
+                    self.token.balances[recipient_pem] = 0
+
+                self.token.balances[sender_pem] -= interaction.points
+                self.token.balances[recipient_pem] += interaction.points
+
             elif isinstance(interaction, Token):
                 if self.token.balances.get(interaction.owner) is None:
                     self.token.balances[interaction.owner] = interaction.amount

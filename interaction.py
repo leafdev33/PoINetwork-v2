@@ -24,7 +24,8 @@ class Interaction:
         return False
 
     def sign(self, private_key):
-        private_key = RSA.importKey(private_key)
+        if not isinstance(private_key, RSA.RsaKey):
+            private_key = RSA.importKey(private_key)
         hashed_data = SHA256.new(self.data.encode('utf-8'))
         signer = PKCS1_v1_5.new(private_key)
         self.signature = signer.sign(hashed_data)

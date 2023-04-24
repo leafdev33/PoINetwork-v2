@@ -28,8 +28,8 @@ class TestBlockchain(unittest.TestCase):
 
         # Create sample interactions
         interaction1 = Interaction('like - post1', public_key1, public_key2, 10)
-        interaction2 = Interaction('share - post2', public_key1, 15)
-        interaction3 = Interaction('like - post1', public_key2, 10)
+        interaction2 = Interaction('share - post2', public_key1, public_key2, 15)  # Added recipient argument
+        interaction3 = Interaction('like - post1', public_key2, public_key1, 10)  # Updated the recipient to public_key1
 
         # Sign the interactions
         interaction1.sign(key1.exportKey())
@@ -75,8 +75,7 @@ class TestBlockchain(unittest.TestCase):
 
 class TestNode(unittest.TestCase):
     def test_node(self):
-        node1 = Node()
-        node2 = Node()
+        node = Node()
 
         key = RSA.generate(2048)
         pubkey1 = key.publickey().export_key()
@@ -86,22 +85,21 @@ class TestNode(unittest.TestCase):
         pubkey2 = key.publickey().export_key()
 
         # Add initial tokens to pubkey1
-        node1.token.add_tokens(pubkey1, 1000)
+        node.token.add_tokens(pubkey1, 1000)
 
         event = "Test event: token transfer"
-        interaction1 = node1.create_interaction(event, pubkey1, private_key1, RSA.importKey(pubkey2), 10)
-        interaction2 = Interaction(event, pubkey2, 200)
+        interaction1 = node.create_interaction(event, pubkey1, pubkey2, private_key1, 10)
+        interaction2 = node.create_interaction(event, pubkey1, pubkey2, private_key1, 200)
 
         # Test interaction verification
         self.assertTrue(interaction1.verify_signature())
 
         # Test updating balances with interactions
-        node1.update_balances([interaction1, interaction2])
-        node2.update_balances([interaction1, interaction2])
+        node.update_balances([interaction1, interaction2])
 
         # Check if the balances have been updated correctly
-        self.assertEqual(node1.get_balance(pubkey1), 1010)
-        self.assertEqual(node2.get_balance(pubkey2), 200)
+        self.assertEqual(node.get_balance(pubkey1), 790)  # 1000 initial - 210 points
+        self.assertEqual(node.get_balance(pubkey2), 210)  # pubkey2 receives 210 points (10 + 200) from interactions
 
 if __name__ == '__main__':
     unittest.main()
