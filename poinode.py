@@ -1,5 +1,6 @@
 import socket
-import json
+from json.decoder import JSONDecodeError
+import socket
 from blockchain import Blockchain
 from pointoken import Token
 from interaction import Interaction
@@ -66,3 +67,18 @@ class Node:
 
     def get_balance(self, public_key_pem):
         return self.token.balances.get(public_key_pem, 0)
+
+    def handle_incoming_messages(self):
+        while self.connected:
+            try:
+                data = self.connection.recv(1024)
+                if not data:
+                    self.connected = False
+                else:
+                # Process the received data...
+                    pass
+            except (ConnectionResetError, JSONDecodeError) as e:
+                print(f"Error handling node: {e}")
+                self.connected = False
+            finally:
+                self.connection.close()

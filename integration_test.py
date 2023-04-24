@@ -1,9 +1,12 @@
 import unittest
+import threading
 from blockchain import Blockchain
 from interaction import Interaction
 from consensus import PoIConsensus
 from pointoken import Token, SignedTransaction
 from poinode import Node
+from poinetwork import Network
+import time
 from Crypto.PublicKey import RSA
 
 class MockNode:
@@ -101,5 +104,52 @@ class TestNode(unittest.TestCase):
         self.assertEqual(node.get_balance(pubkey1), 790)  # 1000 initial - 210 points
         self.assertEqual(node.get_balance(pubkey2), 210)  # pubkey2 receives 210 points (10 + 200) from interactions
 
+class TestNetworkIntegration(unittest.TestCase):
+
+    def setUp(self):
+        self.network = Network("localhost", 5000)
+        network_thread = threading.Thread(target=self.network.start)
+        network_thread.daemon = True
+        network_thread.start()
+        time.sleep(1)  # Add a short delay to allow the network to start
+
+        self.node1 = Node()
+        self.node2 = Node()
+        self.node1.connect("localhost", 5000)
+        self.node2.connect("localhost", 5000)
+        time.sleep(1)  # Add a short delay to allow the nodes to connect
+
+    def test_network_integration(self):
+        # Generate a key pair for the node
+        key = RSA.generate(2048)
+        public_key = key.publickey().exportKey()
+        private_key = key.export_key()
+
+        # Generate a key pair for the recipient
+        recipient_key = RSA.generate(2048)
+        recipient_public_key = recipient_key.publickey().exportKey()
+
+        # Create two nodes and connect to the network
+        node1 = Node()
+        node2 = Node()
+        node1.connect("localhost", 5000)
+        node2.connect("localhost", 5000)
+
+        # Create an interaction and sign it
+        interaction = node1.create_interaction("Test interaction", public_key, recipient_public_key, private_key, 10)
+
+        # Send the interaction from node1
+        node1.broadcast_interaction(interaction)
+
+        # Verify that node2 received the interaction
+        received_interaction = node2.receive_interaction()
+        self.assertEqual(interaction, received_interaction)
+
+    def tearDown(self):
+        self.node1.connection.close()
+        self.node2.connection.close()
+        time.sleep(1)  # Allow time for sockets to close
+        self.network.server.close()
+        
 if __name__ == '__main__':
     unittest.main()
